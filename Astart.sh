@@ -39,23 +39,24 @@ MinMem='3000M'
 JavaTuning="-XX:+UnlockExperimentalVMOptions -XX:+UseG1GC -XX:ParallelGCThreads=5 -XX:G1NewSizePercent=20 -XX:G1ReservePercent=20 -XX:MaxGCPauseMillis=50 -XX:G1HeapRegionSize=16M -XX:+AggressiveOpts -XX:+UseCompressedOops"
 
 # == 备份 ==
-    # - 备份主目录
-    #   此目录不会被压缩进备份文件
-    #   可以存放备份文件和其他你不希望被压缩的各种文件
-BackupRootFolder='ServerSaveFiles/'
     # - 自动备份,可配合自动重启使用
     #   默认 启用
 AutoBackup='true'
+    # - 备份主目录
+    #   此目录不会被压缩入备份压缩包，可存放备份和其他你不想压缩的文件
+    #   目录结尾需加"/"
+    #   默认 'BackupMainFolder/'
+MainBackupFolder='BackupMainFolder/'
     # - 每重启n次备份一次服务端
     #   不可小于 1
     #   默认 20
-MakeBakPer='12'
+MakeBakPer='20'
     # - 重启次数大于n次后再执行备份 0则禁用
     #   默认 禁用
 MakeBakDelay='0'
     # - 备份文件储存位置 默认 Backups/ 目录结尾需加"/"
     #   默认 Backups
-BackupFolder='ServerBackupFiles/'
+BackupFolder='ServerBackups/'
     # - 自动删除过期备份
     #   保留最新的n个备份 n小于等于1则禁用自动删除
     #   默认 5
@@ -65,15 +66,15 @@ MaxBackupNum='5'
     # - 启用 AntiAttack MCPR提供支持 默认关闭
 MCPR_Act='true'
     # ==== CoreProtect ====
-        # - 自动移东 CoreProtect 的数据库文件到指定回收站
+        # - 自动移动 CoreProtect 的数据库文件到指定回收站
         #   默认 启用
 CP_AutoRemoveDB='true'
         # - 重启 n 次后移动数据库到回收站
         #   默认 40
-CP_RemoveDBNum='30'
+CP_RemoveDBNum='40'
         # - 回收站目录 固定位于 服务端备份 目录下子目录 目录结尾需加"/"
-        #   默认 ServerBackupFiles/'OverdueCoreProtectDB/'
-CP_DBFolder='OverdueCoreProtectDB/'
+        #   默认 BackupMainFolder/'OverdueCoreProtectDB/'
+CP_DBfolder='OverdueCoreProtectDB/'
         # - 保留n个数据库 不可小于1
         #   默认 2
 CP_MaxDBNum='2'
@@ -91,9 +92,9 @@ function Init () {
     else
          MCPR=''
     fi
-    # - 检查备份目录
-    if [ ! -d $BackupFolder ]; then
-        mkdir $BackupFolder
+    # - 检查主备份目录
+    if [ ! -d $MainBackupFolder ]; then
+        mkdir $MainBackupFolder
     fi
     # - 备份计数器移位
     if [ $MakeBakDelay -lt 0 ]; then
@@ -127,6 +128,7 @@ function mAutoDelLog () {
     fi
     echo ""
     echo "= = ---------- 完成 ---------- = ="
+    echo ""
 }
 
     # 自动备份
@@ -138,11 +140,16 @@ function mAutoBackup () {
     FileType='zip'
     # - 文件后缀
     FileTile='bak'
+    # - 检查备份目录
+    if [ ! -d $MainBackupFolder$BackupFolder ]; then
+        mkdir $MainBackupFolder$BackupFolder
+    fi
+
     if [ $AutoBackup == "true"  ]; then
         echo ""
         echo "= = ----- 现在是 $mDate ,开始备份服务器 ----- = ="
-         zip -r ./$FileType-$mDate-v$GameVersion.bak ./ -x "./$BackupFolder*"
-         mv ./*.bak ./$BackupFolder 2> /dev/null
+         zip -r ./$FileType-$mDate-v$GameVersion.bak ./ -x "./$MainBackupFolder*"
+         mv ./*.bak ./$MainBackupFolder$BackupFolder 2> /dev/null
          echo ""
          echo "= = ---------- 备份完毕 ---------- = ="
          echo ""
@@ -155,14 +162,14 @@ function autoDelOld () {
     echo "= = ---------- 准备删除过期备份 ---------- = ="
     echo ""
     if [ $MaxBackupNum -gt 0 ]; then
-        FileNum=`ls -t $BackupFolder | wc -l`
+        FileNum=`ls -t $MainBackupFolder$BackupFolder*.bak 2> /dev/null | wc -l`
         if [ $FileNum -gt $MaxBackupNum ]; then
             DelNum=$[ $FileNum-$MaxBackupNum ]
             echo '  - 备份文件总数: '$FileNum
             echo '  - 准备删除的文件数: '$DelNum
             for((mint = 1; mint<=$DelNum; mint++)); do
-                TargetFileName=`ls -tr $BackupFolder | head -n 1`
-                Target=$BackupFolder$TargetFileName
+                TargetFileName=`ls -tr $MainBackupFolder$BackupFolder*.bak | head -n 1`
+                Target=$TargetFileName
                 rm $Target
             done
             echo "  - 已删除过期备份"
@@ -185,28 +192,28 @@ function AutoRemoveCoreProtectDB () {
     echo "= = ---------- 准备清理数据库 ---------- = ="
     echo ""
     # - 检查数据库回收站目录
-    if [ ! -d $BackupFolder$CP_DBFolder ]; then
-        mkdir $BackupFolder$CP_DBFolder
+    if [ ! -d $MainBackupFolder$CP_DBfolder ]; then
+        mkdir $MainBackupFolder$CP_DBfolder
     fi
     # - 移动数据库文件
-            CP_Date=`date '+%Y年%m月%d日-%H:%M:%S'`
+    CP_Date=`date '+%Y年%m月%d日-%H:%M:%S'`
         # - 文件类型
     CP_FileType='db'
         # - 文件后缀
     CP_FileTile='bak'
         # - 移动数据库
-    mv ./*.db $BackupFolder$CP_DBFolder$CP_FileType-$CP_Date-database.bak
+    mv ./plugins/CoreProtect/*.db $MainBackupFolder$CP_DBfolder$CP_FileType-$CP_Date-database.bak 2> /dev/null
     # - 检查配置是否正确
     if [ $CP_MaxDBNum -ge 1 ];then
         # - 自动清理过期数据库
-        CP_DBNum=`ls -t $BackupFolder$CP_DBFolder*.bak 2> /dev/null | wc -l`;
+        CP_DBNum=`ls -t $MainBackupFolder$CP_DBfolder*.bak 2> /dev/null | wc -l`;
         if [ $CP_DBNum -gt $CP_MaxDBNum ]; then
             CP_DelNum=$[ $CP_DBNum-$CP_MaxDBNum ]
             echo '  - 将保留 '$CP_MaxDBNum' 个数据库'
             echo '  - 准备删除: '$CP_DelNum' 个数据库'
             for((CP_mint = 1; CP_mint<=$CP_DelNum; CP_mint++)); do
-                CP_TargetFileName=`ls -tr $BackupFolder$CP_DBFolder | head -n 1`
-                CP_Target=$BackupFolder$CP_DBFolder$CP_TargetFileName
+                CP_TargetFileName=`ls -tr $MainBackupFolder$CP_DBfolder | head -n 1`
+                CP_Target=$MainBackupFolder$CP_DBfolder$CP_TargetFileName
                 rm $CP_Target
             done
             echo "  - 已删除过期数据库"
