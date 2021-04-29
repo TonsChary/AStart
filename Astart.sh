@@ -109,7 +109,7 @@ function Init () {
     # 自动删除日志/报告
 function mAutoDelLog () {
     echo ""
-    echo "= = ---------- 准备删除过期日志 ---------- = ="
+    echo "  = = 准备删除过期日志  = ="
     if [ $LastJVMLogs -ge 0 ] || [ $LastServerLogs -ge 0 ]; then
     # - JVM
         JVMLogNum=`ls -t ./hs_err*.log 2> /dev/null | wc -l`;
@@ -127,7 +127,7 @@ function mAutoDelLog () {
         fi
     fi
     echo ""
-    echo "= = ---------- 完成 ---------- = ="
+    echo "  = = - 完成 - = ="
     echo ""
 }
 
@@ -147,19 +147,19 @@ function mAutoBackup () {
 
     if [ $AutoBackup == "true"  ]; then
         echo ""
-        echo "= = ----- 现在是 $mDate ,开始备份服务器 ----- = ="
-         zip -r ./$FileType-$mDate-v$GameVersion.bak ./ -x "./$MainBackupFolder*"
-         mv ./*.bak ./$MainBackupFolder$BackupFolder 2> /dev/null
-         echo ""
-         echo "= = ---------- 备份完毕 ---------- = ="
-         echo ""
+        echo "  = = 现在是 $mDate ,开始备份服务器 = ="
+        zip -r ./$FileType-$mDate-v$GameVersion.bak ./ -x "./$MainBackupFolder*"
+        mv ./*.bak ./$MainBackupFolder$BackupFolder 2> /dev/null
+        echo ""
+        echo "  = = - 备份完毕 - = ="
+        echo ""
     fi
 }
 
     # 自动删除过期备份
 function autoDelOld () {
     echo ""
-    echo "= = ---------- 准备删除过期备份 ---------- = ="
+    echo "  = = 准备删除过期备份 = ="
     echo ""
     if [ $MaxBackupNum -gt 0 ]; then
         FileNum=`ls -t $MainBackupFolder$BackupFolder*.bak 2> /dev/null | wc -l`
@@ -182,14 +182,14 @@ function autoDelOld () {
         echo "  - 参数设置错误，已跳过此步"
     fi
     echo ""
-    echo "= = ---------- 完成 ---------- = ="
+    echo "  = = - 完成 - = ="
     echo ""
 }
 
 # CoreProtect
 function AutoRemoveCoreProtectDB () {
     echo ""
-    echo "= = ---------- 准备清理数据库 ---------- = ="
+    echo "  = = - 准备清理数据库 = ="
     echo ""
     # - 检查数据库回收站目录
     if [ ! -d $MainBackupFolder$CP_DBfolder ]; then
@@ -227,7 +227,7 @@ function AutoRemoveCoreProtectDB () {
         echo "  - CoreProtect配置错误，但我们还是将数据库移入了回收站，请排查错误后重试！"
     fi
     echo ""
-    echo "= = ---------- 完成 ---------- = ="
+    echo "= = - 完成 - = ="
     echo ""
 }
 
