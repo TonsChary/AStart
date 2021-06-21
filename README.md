@@ -1,7 +1,7 @@
 # AStart
  一个简单的MC启服Shell
 
-详情页在B站： [还在审核xwx]
+详情页在B站： [[Minecraft\]AStart 一个简单的服务端启动脚本，适用于Linux - 哔哩哔哩 (bilibili.com)](https://www.bilibili.com/read/cv11817163)
 
 更新会以模块的形式（文字）的形式，就像这样：
 
